@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apk update && apk add git
 
 #Define arguments
-ARG github_repo='swarm_management'
+ARG github_repo=''
 ARG github_branch='release'
 
 ENV github_repo $github_repo
@@ -43,4 +43,3 @@ RUN pip install -r requirements.txt
 RUN touch module.log
 RUN ["chmod", "+x", "./start_module.sh"]
 ENTRYPOINT [ "./start_module.sh" ]
-# ENTRYPOINT [ "python3", "main.py" ]
