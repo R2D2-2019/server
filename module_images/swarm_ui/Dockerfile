@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apk update && apk add git
 
 #Define arguments
-ARG github_repo=''
+ARG github_repo='swarm_ui'
 ARG github_branch='release'
 
 ENV github_repo $github_repo
