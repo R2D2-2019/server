@@ -11,3 +11,6 @@ These are the commands that were used to configure the server.
 - Make binary executable<br>
 	`sudo chmod +x /opt/bin/docker-compose`
 - Now we can use docker-compose to run multi-container applications
+
+## Network Topology
+![BasicNetworkTopology](https://user-images.githubusercontent.com/31623036/59689742-7dc0cd00-91e0-11e9-8c2d-c5cb0c839fcd.png)
