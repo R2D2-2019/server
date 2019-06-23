@@ -1,9 +1,8 @@
 #Build the base ressources.
 FROM python:alpine3.7 
-COPY ./* /app/
-WORKDIR /app
 
 RUN apk update && apk add git
+RUN apk add --no-cache bash
 
 #Define arguments
 ARG github_repo='microphone'
@@ -17,6 +16,9 @@ RUN echo $github_repo
 RUN echo $github_branch
 
 EXPOSE 5000
+
+COPY ./* /app/
+WORKDIR /app
 
 #Clone the build environment
 RUN git clone https://github.com/R2D2-2019/r2d2-python-build
@@ -35,6 +37,8 @@ WORKDIR /app
 #We can't easily access the file from a different working directory, so we move it now, before moving directories.
 COPY ./requirements.txt /app/r2d2-python-build/modules/${github_repo}
 COPY ./start_module.sh /app/r2d2-python-build/modules/${github_repo}
+COPY ./docker_tests.sh /app/r2d2-python-build/modules/${github_repo}
+
 WORKDIR /app/r2d2-python-build/modules/${github_repo}
 #Checkout the selected branch
 RUN git checkout $github_branch
@@ -42,4 +46,5 @@ RUN git checkout $github_branch
 RUN pip install -r requirements.txt
 RUN touch module.log
 RUN ["chmod", "+x", "./start_module.sh"]
+RUN ["chmod", "+x", "./docker_tests.sh"]
 ENTRYPOINT [ "./start_module.sh" ]
