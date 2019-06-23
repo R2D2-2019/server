@@ -7,6 +7,10 @@ set -eo pipefail
 
 # CD to the directory of the script, so that we know where the image folders are.
 cd "$(dirname "$0")"
+> build.log
+yell() { echo "$0: $*" >&2; }
+die() { yell "$*"; exit 111; }
+try() { "$@" || die "cannot $*"; }
 
 declare -a images_to_test=("base_image" "main_server" "microphone" "swarm_analytics" "swarm_management" "swarm_ui" "CAN_Navigation" "voice_interaction")
 declare images_exist=true
@@ -19,13 +23,12 @@ for i in ${images_to_test[@]}; do
         printf '%-30s image exists, cleaning it.\n' "$i"
         docker image rm -f "$name"
     fi
-    break
 done
 
 for x in ${images_to_test[@]}; do
     name=${x,,}
     printf $'%-30s %-30s\n' "$name" "Building image"    # docker tags have to be lower_case
-    docker build -t "$name" ./"$x" &>/dev/null &        # redirect STDOUT to /dev/null to only show errors. Also run in background
+    docker build -t "$name" ./"$x" &>build.log &        # redirect STDOUT to /dev/null to only show errors. Also run in background
     pid=$!                                              # Process Id of the previous running command
     spin='-\|/'                                         # spinner characters
     i=0                                                 # increment the character we want to show
@@ -34,9 +37,16 @@ for x in ${images_to_test[@]}; do
         printf "\r${spin:$i:1}"                         # erase the previous animation character and print the next one.
         sleep .1                                        # delay a slight bit.
     done
-    printf $'\r%-30s image built.\n' "$x"               # print that the current image is built so that it doesn't feel so long
+    if ! docker inspect "$name" &>/dev/null; then
+        printf $'\r Something went wrong while building the image! check the logs!\n'
+        false
+    else
+        printf $'\r%-30s image built.\n' "$x"               # print that the current image is built so that it doesn't feel so long
+    fi
     if ! docker run -ti -e="CLI=true" $name ./docker_tests.sh; then
         false
     fi
+    echo "test"
+    break
 done
 
