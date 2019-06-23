@@ -22,7 +22,12 @@ try() { "$@" || die "cannot $*"; }
 
 # array of image names. These should be the image directories.
 # Space separated double quoted values.
-declare -a images_to_test=("base_image" "main_server" "microphone" "swarm_analytics" "swarm_management" "swarm_ui" "CAN_Navigation" "voice_interaction")
+if [[ -n $TARGET ]]; then
+    declare -a images_to_test=($TARGET)
+else
+    declare -a images_to_test=("base_image" "main_server" "microphone" "swarm_analytics" "swarm_management" "swarm_ui" "CAN_Navigation" "voice_interaction")
+fi
+
 for i in ${images_to_test[@]}; do
     # Docker tags should be lower_case
     name=${i,,}
