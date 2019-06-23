@@ -22,7 +22,8 @@ for i in ${images_to_test[@]}; do
 done
 
 for x in ${images_to_test[@]}; do
-    name=${x,,}                                     # docker tags have to be lower_case
+    name=${x,,}
+    printf $'%-30s %-30s\n' "$name" "Building image"# docker tags have to be lower_case
     docker build -t "$name" ./"$x" &>/dev/null &    # redirect STDOUT to /dev/null to only show errors. Also run in background
     pid=$!                                          # Process Id of the previous running command
     spin='-\|/'                                     # spinner characters
@@ -34,3 +35,4 @@ for x in ${images_to_test[@]}; do
     done
     printf $'\r%-30s image built.\n' "$x"           # print that the current image is built so that it doesn't feel so long
 done
+
