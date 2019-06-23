@@ -33,7 +33,6 @@ for dir in ${directories_to_test[@]}; do
 done
 
 for lib in ${libs[@]}; do
-    printf $'%-30s %-15s is installed\n' "checking that library" "$lib"
     # check if all libraries that are specified in requirements.txt are installed.
     try_import python -c "import sys, pkgutil; sys.exit(0 if pkgutil.find_loader(sys.argv[1]) else 1)" $lib
 done
