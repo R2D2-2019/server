@@ -69,5 +69,4 @@ for x in ${images_to_test[@]}; do
     if ! docker run -ti -e="CLI=true" $name ./docker_tests.sh; then
         false
     fi
-    break
 done
