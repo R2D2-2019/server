@@ -1,9 +1,7 @@
 #Build the base ressources.
 FROM python:alpine3.7 
-COPY ./* /app/
-WORKDIR /app
 
-RUN apk update && apk add git 
+RUN apk update && apk add git
 RUN apk add --no-cache bash
 
 #Define arguments
@@ -18,6 +16,9 @@ RUN echo $github_repo
 RUN echo $github_branch
 
 EXPOSE 5000
+
+COPY ./* /app/
+WORKDIR /app
 
 #Clone the build environment
 RUN git clone https://github.com/R2D2-2019/r2d2-python-build
