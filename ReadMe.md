@@ -15,8 +15,24 @@ These are the commands that were used to configure the server.
 ## Network Topology
 ![BasicNetworkTopology](https://user-images.githubusercontent.com/31623036/59689742-7dc0cd00-91e0-11e9-8c2d-c5cb0c839fcd.png)
 
-## Testing the images and containers
+## Design Decisions
+In this chapter we'll present the decisions we've made with regards to the server, network and accompanying infrastructure.
 
+### Choice of OS
+For the R2-D2 server we chose CoreOS (also known as `Container Linux`).
+The rationale was that we wanted an OS that was as lightweight as possible. This is so that we can dedicate as many of the resources as possible to the containers.
+Linux itself was already winning on this front versus a windows server purely based on resource usage.
+CoreOS was selected based on the fact that it's a distribution made to manage containers. It contains only the bare minimum of tools/packages necessary for running linux, network management, raid management and container management. By using this distribution we're able to dedicate almost all system resources to the containers.
+
+### Choice of container software
+We've decided to use Docker for our containers. 
+We chose to use Docker based on the fact that it's one of, if not the, most widely-used containerization software on the market right now. This means that there is extensive documentation, troubleshooting and more available on the internet should we encounter any issues. 
+Alternatives such as Kubernetes were appealing as well, but we decided to go with the software that had the biggest community.
+
+
+
+## Testing the images and containers
+<details><summary>Click here to show the testing information</summary>
 Once you've cloned the repository, you can navigate to the `module_images` folder. 
 In there you'll find one folder for each of the modules that have to run on the server.
 Each folder contains the following files:
@@ -85,3 +101,4 @@ To run the test suite on only one image, you can call the script like so:
 You can only specify one target at a time.
 The target name must be identical to the folder name of the image you want to test.
 
+</details>
