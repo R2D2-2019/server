@@ -1,8 +1,66 @@
-These are the commands that were used to configure the server.
-## System CTL changes:
-	- `sudo systemctl enable docker` // Treats docker as a service, which means it'll get started up whenever the machine starts.
+## Setting up the server
 
-## Installing docker-compose
+### 1. Downloading CoreOS and setting up SSH keys
+**Requirements:** 2 USB-sticks
+#### Creating bootable USB
+1. The coreOS (Container Linux) ISO can be found here: [direct link](https://stable.release.core-os.net/amd64-usr/current/coreos_production_iso_image.iso) (Stable channel)
+2. Create a bootable usb using your favorite tool (like [Etcher](https://www.balena.io/etcher/))
+
+#### Creating an ignition config
+You cannot login to the server using a username/password combination, instead it uses your PC's public key.
+**EDIT:** You can actually use a password username/password combination too, explanation can be found [here](https://github.com/coreos/container-linux-config-transpiler/blob/master/doc/examples.md)
+
+Our basic ignition file looks like this:
+```json
+{
+  "ignition": {
+    "config": {},
+    "timeouts": {},
+    "version": "2.1.0"
+  },
+  "networkd": {},
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "sshAuthorizedKeys": [
+          "PLACE YOUR KEY HERE"
+        ]
+      }
+    ]
+  },
+  "storage": {},
+  "systemd": {}
+}
+```
+Replace `PLACE YOUR KEY HERE` with your own public key, you can add multiple keys in the following manner:
+```json
+"sshAuthorizedKeys": [
+   "PLACE YOUR KEY HERE",
+   "ANOTHER KEY HERE"
+]
+```
+**Optional:** You can also change the default core username to something else or add extra users.
+When you are done editing the config you can validate it using the [online validator](https://coreos.com/validate/).
+
+Save to json file to something like ignition.json and save it to the other USB-drive.
+
+### 2. Installing CoreOS and the ignition file
+1. Place both USB-drives into the server and boot from the CoreOS drive.
+2. After booting up you will be greeted with a prompt
+3. To install CoreOS to the disk execute the following command:
+```coreos-install -d /dev/your_drive -i ignition.json```
+replace `your_drive` with the correct drive identifier (someting like `sda`)
+locate the other usb drive and point towards the ignition file, you will probably need to mount the USB drive first
+4. After it is finished, reboot the machine and unplug the drives.
+5. Congratulations you have succesfully installed CoreOS on the server, you can now use SSH to login to the server using `core@ipaddress` (if you kept the username as core).
+**Note:** the server uses it's ip-address as it's hostname.
+
+### 3. Server configuration
+**3.1. System CTL changes:**
+`sudo systemctl enable docker` // Treats docker as a service, which means it'll get started up whenever the machine starts.
+
+**3.2. Installing docker-compose:**
 - Create directory for the binary<br>
 	`sudo mkdir /opt`<br>
 	`sudo mkdir /opt/bin`
