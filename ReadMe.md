@@ -1,3 +1,4 @@
+
 ## Setting up the server
 
 ### 1. Downloading CoreOS and setting up SSH keys
@@ -43,13 +44,13 @@ Replace `PLACE YOUR KEY HERE` with your own public key, you can add multiple key
 **Optional:** You can also change the default core username to something else or add extra users.
 When you are done editing the config you can validate it using the [online validator](https://coreos.com/validate/).
 
-Save to json file to something like ignition.json and save it to the other USB-drive.
+Save to json file to something like `ignition.json` and save it to the other USB-drive.
 
 ### 2. Installing CoreOS and the ignition file
 1. Place both USB-drives into the server and boot from the CoreOS drive.
 2. After booting up you will be greeted with a prompt
 3. To install CoreOS to the disk execute the following command:
-```coreos-install -d /dev/your_drive -i ignition.json```
+```coreos-install -d /dev/your_drive -i ignition.json```<br>
 replace `your_drive` with the correct drive identifier (someting like `sda`)
 locate the other usb drive and point towards the ignition file, you will probably need to mount the USB drive first
 4. After it is finished, reboot the machine and unplug the drives.
@@ -69,6 +70,49 @@ locate the other usb drive and point towards the ignition file, you will probabl
 - Make binary executable<br>
 	`sudo chmod +x /opt/bin/docker-compose`
 - Now we can use docker-compose to run multi-container applications
+
+**3.3. Setting up software-RAID**
+The server doesn't contain a Hardware-RAID controller, so we are going to setup software RAID, the server contains 4 Drives, 2x 500GB and 2x1TB.
+You can't setup sofware RAID on the boot drive, so we installed CoreOS on one of the 500GB drives.
+We are going to use the two 1TB drives in RAID-1 configuration.
+
+1. Find the correct drive identifications using `fdisk -l` this will show all drives, it's disk size and drive label.
+2. After you have found the disks, you need to erase the contents/partitions of it, for example if your drive is `sda` use `fdisk /dev/sda` to select the drive. Press `p` to show the partitions on the drive. Press `d` to delete a partition, select the partition number and press enter again. Do this until all partitions are erased. When you are done press `w` to write (save) the changes.
+Do this for all the drives you are going to use for the RAID partition. **Be aware not to erase the boot drive.**
+3. In order to create the RAID disk use:<br>
+`sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 /dev/sda /dev/sdb`
+**Explanation:**
+`/dev/md0` The RAID disks name.
+`--level=1` The RAID level eq RAID-1.
+`--raid-devices=2` The amount of disks this RAID setup will contain.
+`/dev/sda /dev/sdb` The devices that will be included in the RAID array, this should mirror `--raid-devices=`
+4. It is possible to get a warning that looks something like this: `this array has metadata at the start and may not be suitable as a boot device.` you can just press `y` to build the RAID anyway.
+5. mdadm will start to mirror the drives, to check the status of this you can use `
+cat /proc/mdstat`
+**Note:** You don't have to wait for this process to finish.
+
+**3.4 Create and mount the filesystem**
+In order to use the newly created RAID drive we need to create a new filesystem for that drive.
+1. To create a ext4 partition on the drive use `sudo mkfs.ext4 -F /dev/md0`.
+2. Create a mount point for the drive `sudo mkdir -p /mnt/raid`.
+3. Mount the drive using `sudo mount /dev/md0 /mnt/raid`.
+4. The RAID drive is now accessible through `/mnt/raid`.
+
+ **3.5 Make Docker use the new RAID setup**
+1. Stop the Docker service `sudo systemctl stop docker` 
+2. Create a directory for the "drop-in file" `sudo mkdir /etc/systemd/system/docker.service.d`
+3. Create the Docker config file `sudo touch /etc/systemd/system/docker.service.d/docker.conf`
+4. Open the newly created `docker.conf` file and add the following:
+```
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd --graph="/mnt/raid" --storage-driver=devicemapper
+```
+**Note:** replace `/mnt/raid` with the name chosen in step 3.4
+5. Reload the Docker deamon `sudo systemctl daemon-reload`
+6. Start the Docker service `sudo systemctl start docker`
+7. Congratulations the Docker images/containers will now use the RAID setup.
+
 
 ## Network Topology
 ![BasicNetworkTopology](https://user-images.githubusercontent.com/31623036/59689742-7dc0cd00-91e0-11e9-8c2d-c5cb0c839fcd.png)
