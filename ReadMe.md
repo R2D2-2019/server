@@ -57,7 +57,7 @@ locate the other usb drive and point towards the ignition file, you will probabl
 **Note:** the server uses it's ip-address as it's hostname.
 
 ### 3. Server configuration
-**3.1. System CTL changes:**
+**3.1. System CTL changes:**<br>
 `sudo systemctl enable docker` // Treats docker as a service, which means it'll get started up whenever the machine starts.
 
 **3.2. Installing docker-compose:**
