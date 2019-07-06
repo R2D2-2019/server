@@ -120,9 +120,50 @@ ExecStart=/usr/bin/dockerd --graph="/mnt/raid" --storage-driver=devicemapper
 6. Start the Docker service `sudo systemctl start docker`
 7. Congratulations the Docker images/containers will now use the RAID setup.
 
+**3.6 setting up the docker management software**
+
+To manage our containers, we've decided to user [Portainer](https://www.portainer.io/).
+It provides an easy to use graphical interface for managing containers, images and more. 
+You can find the Portainer documentation here: [docs](https://portainer.readthedocs.io/en/stable/)
+
+The setup is very simple, just run the following commands:
+1. `docker volume create portainer_data` - This command creates persistent storage for containers. Normally containers keep their data in RAM (using a RAM File System) but using a volume means that the data is still available even after the container is restarted.
+2. `docker run -d -p 9000:9000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer`
+  - `docker run` starts a container
+  - `-d` means that the container will run as a `daemon` (a service in the background)
+  - `-p 9000:9000` means that port `9000` on the container is exposed to port `9000` on the server (which makes it accessible within the network)
+  - `--name portainer` sets the name of the container to `portainer`
+  - `--restart always` makes it so that if, for whatever reason, the container shuts-down it will start back up. 
+  - `-v /var/run/docker.sock:var/run/docker.sock` This command binds a volume to the container, namely `docker.sock`. 
+    - The there are two parameters, separated by the `:` symbol.
+    - The first parameter is the name of the volume on the server
+    - The second parameter is where this volume will be available within the container (in this case `var/run/docker.sock`)
+  - `-v portainer_data:/data portainer/portainer` This parameter does the same as the previous parameter except it binds the volume we created earlier to the container.
+    - This is where portainer will store it's data.
+  - `portainer/portainer` is the image name. It tells docker to:
+    1. Look into the `portainer` repository
+    2. Fetch the image called `portainer` from there
+
+Portainer will now be availble from the R2D2 network by going to: `server_ip:9000` where `server_ip` is the IP that the router assigned to the server.
 
 ## Network Topology
 ![BasicNetworkTopology](https://user-images.githubusercontent.com/31623036/59689742-7dc0cd00-91e0-11e9-8c2d-c5cb0c839fcd.png)
+
+**4. Setting up the Router**
+The setup process for the router is quite simple.
+1. Plug an ethernet cable into the *blue* port of the router.
+2. Plug the other end of that cable into a working (patched) ethernet port in the lab.
+3. Plug an ethernet cable into the built-in ethernet adapter of the server (this means the port that is **not** one of the PCI(-E) extension cards)
+4. Plug the other end into one of the *yellow* ports of the router
+
+Now that the server is connected to the R2D2 network, it should also have internet access through EduRoam.
+
+To access the server, you'll need to be connected to the same router.
+The easiest way to do so is to connect using an ethernet cable.
+
+To manage the router, you can open your browser and either go to: `10.0.1.1` or to `http://tplinklogin.net/`. 
+The page will ask for a username and password, they are both `admin`. (It is strongly advised to change these credentials, but we have reset them for next year)
+If nothing has changed on the server/network, the server's IP address should be `10.0.1.60`.
 
 ## Design Decisions
 In this chapter we'll present the decisions we've made with regards to the server, network and accompanying infrastructure.
