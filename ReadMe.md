@@ -80,24 +80,27 @@ We are going to use the two 1TB drives in RAID-1 configuration.
 
 1. Find the correct drive identifications using `fdisk -l` this will show all drives, it's disk size and drive label.
 2. After you have found the disks, you need to erase the contents/partitions of it, for example if your drive is `sda` use `fdisk /dev/sda` to select the drive. Press `p` to show the partitions on the drive. Press `d` to delete a partition, select the partition number and press enter again. Do this until all partitions are erased. When you are done press `w` to write (save) the changes.
-Do this for all the drives you are going to use for the RAID partition. **Be aware not to erase the boot drive.**
+Do this for all the drives you are going to use for the RAID partition. **Make sure not to accidentally erase the boot drive as you'll have to start all over.**
 3. In order to create the RAID disk use:<br>
 `sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 /dev/sda /dev/sdb`
 **Explanation:**
 `/dev/md0` The RAID disks name.
 `--level=1` The RAID level eq RAID-1.
 `--raid-devices=2` The amount of disks this RAID setup will contain.
-`/dev/sda /dev/sdb` The devices that will be included in the RAID array, this should mirror `--raid-devices=`
-4. It is possible to get a warning that looks something like this: `this array has metadata at the start and may not be suitable as a boot device.` you can just press `y` to build the RAID anyway.
-5. mdadm will start to mirror the drives, to check the status of this you can use `cat /proc/mdstat`
-**Note:** You don't have to wait for this process to finish.
+`/dev/sda /dev/sdb` The devices that will be included in the RAID array, there should be as many disk paths as has been specified by `--raid-devices=`
+     - You might get a warning that looks something like this: `this array has metadata at the start and may not be suitable as a boot device.` You can just press `y` to build the RAID anyway.
+4. mdadm will start to mirror the drives, to check the status of this you can use `cat /proc/mdstat`
+**Note:** You don't have to wait for this process to finish. If you shutdown the server correctly (By running `shutdown -P now` for example), the creation of the raid should resume on next boot. This is not the case for a blackout. If the server doesn't shutdown properly, you'll have to do all the steps from section 3.3 again.
 
 **3.4 Create and mount the filesystem**
 In order to use the newly created RAID drive we need to create a new filesystem for that drive.
 1. To create a ext4 partition on the drive use `sudo mkfs.ext4 -F /dev/md0`.
-2. Create a mount point for the drive `sudo mkdir -p /mnt/raid`.
+    - Replace `/dev/md0` with the drive letter you chose in step 3.3.3
+2. Create a mount point for the drive `sudo mkdir -p /mnt/raid`. (you can replace `raid` with the desired drive name.)
 3. Mount the drive using `sudo mount /dev/md0 /mnt/raid`.
-4. The RAID drive is now accessible through `/mnt/raid`.
+   - Replace `/dev/md0` with the drive letter you chose in step 3.3.3
+   - Replace `/mnt/raid` with the drive letter you chose in step 3.4.2
+4. The RAID drive is now accessible at the drive path you chose in step 3.4.2 (`/mnt/raid` in our example)
 
 **3.5 Make Docker use the new RAID setup**
 1. Stop the Docker service `sudo systemctl stop docker` 
@@ -111,7 +114,7 @@ ExecStart=
 ExecStart=/usr/bin/dockerd --graph="/mnt/raid" --storage-driver=devicemapper
 ```
 
-**Note:** replace `/mnt/raid` with the name chosen in step 3.4
+**Note:** replace `/mnt/raid` with the name chosen in step 3.4.2
 
 5. Reload the Docker deamon `sudo systemctl daemon-reload`
 6. Start the Docker service `sudo systemctl start docker`
